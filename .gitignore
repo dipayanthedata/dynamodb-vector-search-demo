@@ -1,0 +1,30 @@
+# CDK
+infra/cdk.out/
+cdk.out/
+*.d.ts
+cdk.context.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.env.*
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Lambda layer bundling output (built by make, not committed)
+build/
+layers/
+
+# Secrets / local state
+*.pem
+credentials
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp

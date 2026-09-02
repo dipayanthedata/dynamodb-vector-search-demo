@@ -1,0 +1,10 @@
+# Pinned, not >=. The vector-index custom resource in this repo is built against
+# aws-cdk-lib 2.267.0, the version confirmed (docs/api-notes.md, section (c)) to have
+# NO native vector index support - CloudFormation's own AWS::DynamoDB::Table schema
+# doesn't model VectorIndexes yet, and CDK PR #38577 adding it was still open and
+# unmerged as of 2026-09-02. If that PR merges into a later aws-cdk-lib release, the
+# custom-resource approach here may become unnecessary - re-check docs/api-notes.md
+# section (c) before upgrading this pin, since a merged native construct would be a
+# reason to rewrite the vector index construct, not just bump a version number.
+aws-cdk-lib==2.267.0
+constructs>=10.0.0,<11.0.0
