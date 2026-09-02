@@ -7,6 +7,14 @@ never hardcoded, per CLAUDE.md.
 """
 
 import os
+import sys
+from pathlib import Path
+
+# Makes the repo-root `shared/` package (imported by both this CDK app and the Lambda
+# handlers, so the two can't drift on shared config - see shared/vector_config.py)
+# importable from here, since cdk.json runs this script with infra/ as the working
+# directory, one level below the repo root.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import aws_cdk as cdk
 from stacks import VectorSearchStack

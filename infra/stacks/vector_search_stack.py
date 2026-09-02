@@ -2,9 +2,7 @@
 
 Built incrementally - resources are added one build-order step at a time (see
 CLAUDE.md / commit history), each step verified with `cdk synth` before the next.
-This step: the base table only. No vector index yet (added in the next step via
-a custom resource - see docs/api-notes.md section (a); CloudFormation has no
-native VectorIndexes property, see section (c)).
+This step: base table + vector index custom resource. No ingest/search Lambdas yet.
 """
 
 from aws_cdk import CfnOutput, RemovalPolicy, Stack
@@ -17,6 +15,7 @@ from aws_cdk.aws_dynamodb import (
     TableV2,
 )
 from constructs import Construct
+from custom_constructs import VectorIndex
 
 
 class VectorSearchStack(Stack):
@@ -27,17 +26,22 @@ class VectorSearchStack(Stack):
         # construct in aws-cdk-lib 2.267.0. Note it synthesizes to AWS::DynamoDB::GlobalTable
         # in the rendered template, not AWS::DynamoDB::Table, even with zero replicas
         # configured (as here) - that's just how TableV2 models the resource in CDK, not
-        # something we're opting into. The vector index index is added out-of-band via a
-        # custom resource calling UpdateTable (see the next build step) against the table
-        # by name/ARN, entirely independent of which CDK L2 provisioned it - and a
-        # zero-replica GlobalTable is architecturally just a normal single-region DynamoDB
-        # table at the data-plane level DynamoDB itself operates on, so no incompatibility
-        # is expected. docs/api-notes.md's vector search requirements/limitations page is
+        # something we're opting into.
+        #
+        # The open question this raises is control-plane, not data-plane: does
+        # UpdateTable accept a VectorIndexUpdates request against a table whose
+        # CloudFormation resource type is AWS::DynamoDB::GlobalTable? That's genuinely
+        # untested - docs/api-notes.md's vector search requirements/limitations page is
         # silent on GlobalTable specifically (it covers capacity mode, precision, FGAC,
-        # pagination, Query/Scan, PartiQL, and region availability, but not this) - this is
-        # a reasoned inference, not a cited fact, and gets its real confirmation in the next
-        # step when the vector index custom resource's UpdateTable call actually succeeds
-        # against this table.
+        # pagination, Query/Scan, PartiQL, and region availability, but not this). Whether
+        # a zero-replica GlobalTable and a plain Table are the same DynamoDB table at the
+        # data-plane level isn't in doubt - they are, by construction, since a global table
+        # with zero additional replica regions is just a normal regional table underneath.
+        # The vector index construct in the next step calls UpdateTable's VectorIndexUpdates
+        # against this table's name/ARN; if that specific control-plane call rejects a
+        # GlobalTable-backed table, stop and fall back to the legacy Table L2 rather than
+        # debugging around it - see that construct's own comments for the decision point,
+        # and docs/api-notes.md for whichever result actually happened.
         self.table = TableV2(
             self,
             "Table",
@@ -61,17 +65,17 @@ class VectorSearchStack(Stack):
             encryption=TableEncryptionV2.dynamo_owned_key(),
         )
 
-        # `category` (the future vector index's INLINE_FILTER attribute, see
-        # docs/api-notes.md's "Filtering design for this demo") is deliberately NOT declared
-        # here. DynamoDB's CreateTable rejects any AttributeDefinitions entry that isn't
-        # referenced by the table's own key schema or a secondary index defined in the same
-        # call - and TableV2 doesn't expose a way to add an unreferenced one anyway. It gets
-        # added to AttributeDefinitions in the next step's UpdateTable call, in the same
-        # request that adds the vector index whose SearchSchema references it - exactly as
-        # docs/api-notes.md section (a) documents: "If a table's AttributeDefinitions
-        # doesn't already declare an attribute referenced in SearchSchema, it must be added
-        # to AttributeDefinitions in the same UpdateTable call, exactly like a GSI key
-        # attribute."
+        # `category` (the vector index's INLINE_FILTER attribute, see docs/api-notes.md's
+        # "Filtering design for this demo") is deliberately NOT declared on the table
+        # above. DynamoDB's CreateTable rejects any AttributeDefinitions entry that isn't
+        # referenced by the table's own key schema or a secondary index defined in the
+        # same call - and TableV2 doesn't expose a way to add an unreferenced one anyway.
+        # VectorIndex adds it to AttributeDefinitions in its own UpdateTable call, in the
+        # same request that adds the vector index whose SearchSchema references it -
+        # exactly as docs/api-notes.md section (a) documents.
+        self.vector_index = VectorIndex(self, "VectorIndex", table=self.table)
 
         CfnOutput(self, "TableName", value=self.table.table_name)
         CfnOutput(self, "TableArn", value=self.table.table_arn)
+        CfnOutput(self, "VectorIndexName", value=self.vector_index.index_name)
+        CfnOutput(self, "VectorIndexArn", value=self.vector_index.index_arn)

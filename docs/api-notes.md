@@ -407,6 +407,44 @@ Citations:
 - PR aws/aws-cdk#38577 — https://github.com/aws/aws-cdk/pull/38577 — fetched 2026-09-02 (OPEN, not merged)
 - AWS CloudFormation Template Reference, `AWS::DynamoDB::Table` — https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-dynamodb-table.html — fetched 2026-09-02
 
+### TableV2 (`AWS::DynamoDB::GlobalTable`) vs. legacy `Table` (`AWS::DynamoDB::Table`) — which one actually works with `UpdateTable`'s `VectorIndexUpdates`?
+
+Nobody had written this down anywhere findable as of this writing, so it's recorded
+here from a real, live test rather than inferred.
+
+**`TableV2` works.** Live-tested 2026-09-02 against account `{account-id}`,
+region `us-west-2`, `aws-cdk-lib` 2.267.0: a `TableV2` with zero replicas (which
+renders as `AWS::DynamoDB::GlobalTable` in the synthesized template, not
+`AWS::DynamoDB::Table`) accepted an `UpdateTable` call with `VectorIndexUpdates`
+without any control-plane rejection. The custom resource's `update_table` call
+succeeded immediately (accepted, `IndexStatus: CREATING`); the index then went
+through the normal `CREATING`/`Backfilling` → `ACTIVE` lifecycle exactly as
+documented for a plain table in section (a) above - nothing about being
+GlobalTable-backed changed that lifecycle or its timing.
+
+**Observed timing for an empty table** (zero items, so this is close to a lower
+bound - a table with real data would backfill slower): `IndexStatus` reached
+`ACTIVE` with `Backfilling` cleared, and the first `SearchVectors` probe against
+the index succeeded, after **~522–537 seconds (~9 minutes)** of polling at
+15-second intervals (34 polling attempts). The first ~33 polls all still saw
+`CREATING`/`Backfilling`; the 34th poll both observed `ACTIVE` and had its
+`SearchVectors` probe succeed on the first try - in this test, the search-endpoint
+propagation delay section (a) warns about (real, but brief) didn't manifest as a
+separate additional wait beyond `IndexStatus` reaching `ACTIVE`. Don't read too
+much into that - it's one data point on an empty table, not a guarantee the
+search-endpoint lag is always zero.
+
+**Confirmed working end to end:** the reverse direction (`UpdateTable` with a
+`Delete` vector-index action) against the same `GlobalTable`-backed table also
+succeeded cleanly on `cdk destroy`, with no manual cleanup needed - see the
+teardown verification recorded further down as part of this same test.
+
+**Conclusion:** no reason found to fall back to the legacy `Table` L2 for this
+demo. If a future `aws-cdk-lib` release or CloudFormation schema update changes
+this (e.g. via PR #38577 above), re-verify against that version rather than
+assuming this result still holds indefinitely - it was true for aws-cdk-lib
+2.267.0 on 2026-09-02, not asserted as permanent.
+
 ---
 
 ## (d) Is the Lambda-bundled boto3 for `python3.12` new enough for `search_vectors`?
@@ -542,6 +580,53 @@ Citations:
 - Bedrock User Guide, "Amazon Titan Embeddings G1 - Text" (covers both G1 and
   V2 request/response tabs) — https://docs.aws.amazon.com/bedrock/latest/userguide/model-parameters-titan-embed-text.html — fetched 2026-09-02. Backs: exact request/response field names, dimension enum values, model ID.
 - Bedrock pricing page — https://aws.amazon.com/bedrock/pricing/ — fetched 2026-09-02, **inconclusive** (see note above) — not relied upon as a confirmed fact.
+
+---
+
+## Teardown finding: CDK Provider framework orphans two log groups (step 8 evidence, captured early)
+
+Live-tested 2026-09-02, same deploy as the TableV2/GlobalTable test above. After
+`cdk destroy` reported full success (`✅ DynamoDBVectorSearchDemo: destroyed`, no
+`DELETE_FAILED`, no rollback), independently verifying with the CLI (not just
+trusting CloudFormation's own report) found:
+
+- Stack, table, both custom-resource Lambda handlers (with their explicit log
+  groups), the Step Functions waiter state machine, the Lambda layer, and every
+  IAM role we authored: **confirmed gone.**
+- **Two CloudWatch log groups survived**, both belonging to the CDK Provider
+  construct's own internal proxy Lambdas (`framework-onEvent`, `framework-isComplete`
+  - the third, `framework-onTimeout`, was apparently never invoked in this run since
+  the operation never actually timed out, so Lambda never auto-created a log group
+  for it):
+  ```
+  /aws/lambda/{stack}-VectorIndexProviderframew-{hash1}
+  /aws/lambda/{stack}-VectorIndexProviderframew-{hash2}
+  ```
+  Both had `RetentionDays: None` (never expire) and `StoredBytes: 0`.
+
+**Root cause:** `Provider`'s internal proxy Lambdas let Lambda auto-create their
+log groups implicitly on first invocation, rather than the Provider construct
+declaring them as explicit `AWS::Logs::LogGroup` CloudFormation resources (the
+same pattern this repo's own `VectorIndex` construct uses deliberately for its
+*own* two handlers, which is exactly why those two deleted cleanly). An
+implicitly-created log group has no CloudFormation record, so nothing tells
+CloudFormation to delete it when the stack is destroyed. This is a structural
+property of the CDK Provider framework itself - not a bug in this repo's own
+`VectorIndex` construct, and not something within reach of this construct's own
+`on_event`/`is_complete` handler code to fix, since the framework's proxy Lambdas
+are created internally by `Provider`, not by us.
+
+**Deleted manually** (CLI `logs delete-log-group`) as part of this same test, and
+confirmed gone by a follow-up `describe-log-groups` call.
+
+**Mitigation considered but not yet applied:** `Provider`'s constructor accepts a
+`log_retention` parameter, which would at least bound these orphans to a finite
+CloudWatch retention window instead of "never expire" - reducing the severity
+(auto-expiring clutter) without eliminating the root cause (they'd still not be
+deleted by `cdk destroy` itself; they'd just stop existing on their own after the
+retention window). Whether to apply this, and/or add a documented manual cleanup
+step to the demo's own teardown instructions, is a decision for step 8 (the full
+deploy/run/destroy walkthrough), not resolved here.
 
 ---
 
