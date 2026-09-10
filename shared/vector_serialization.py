@@ -13,6 +13,7 @@ representations cannot silently drift apart - see docs/api-notes.md's
 "Implementation consequence" note under section (b).
 """
 
+import math
 from decimal import Decimal
 
 
@@ -22,7 +23,14 @@ def _format_number(value: float) -> str:
     # can use scientific notation ("1e-08") for very small magnitudes, which is
     # reformatted to plain fixed-point via Decimal rather than risk it being
     # misinterpreted.
-    text = repr(float(value))
+    # Reject NaN and infinity explicitly - they produce "nan"/"inf" strings which
+    # are not valid DynamoDB N values and would cause silent bugs or service rejection.
+    fval = float(value)
+    if math.isnan(fval):
+        raise ValueError("NaN is not a valid vector component")
+    if math.isinf(fval):
+        raise ValueError(f"Infinity is not a valid vector component: {fval}")
+    text = repr(fval)
     if "e" in text or "E" in text:
         text = format(Decimal(text), "f")
     return text
