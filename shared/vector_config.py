@@ -31,3 +31,14 @@ VECTOR_INDEX_NAME = "embedding-index"
 # docs/api-notes.md's "Filtering design for this demo". Optional at query time,
 # unlike a HASH search-schema element, which this demo deliberately does not use.
 CATEGORY_ATTRIBUTE_NAME = "category"
+
+# Amazon Titan Text Embeddings V2's model ID, invoked via Bedrock Runtime's
+# InvokeModel - see docs/api-notes.md's "Bedrock Titan Text Embeddings V2" section.
+# Shared so the IAM policy scoping a Lambda's bedrock:InvokeModel grant to this
+# specific model ARN and the Lambda's own InvokeModel request body can't drift.
+EMBEDDING_MODEL_ID = "amazon.titan-embed-text-v2:0"
+
+# Whether to request Titan's output embedding normalized to unit length. True is
+# the model's own default; made explicit here rather than relied upon silently,
+# per the same reasoning as EMBEDDING_DIMENSIONS above.
+EMBEDDING_NORMALIZE = True

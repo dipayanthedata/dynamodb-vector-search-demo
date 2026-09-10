@@ -1,3 +1,11 @@
 ruff>=0.6.0
 pytest>=8.0.0
 pre-commit>=3.0.0
+
+# Pinned to match Makefile's BOTO3_VERSION/BOTOCORE_VERSION (build-layer target) and
+# docs/api-notes.md section (d) - Lambda handler unit tests (botocore.stub.Stubber)
+# import the handler modules directly, so the test-time boto3/botocore must be new
+# enough to know the vector-search API shapes those handlers call, same as the
+# pinned Lambda layer they run against in deployment.
+boto3==1.43.87
+botocore==1.43.87

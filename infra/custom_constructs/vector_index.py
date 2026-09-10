@@ -32,7 +32,6 @@ from shared.vector_config import (
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 _LAMBDA_ASSET_DIR = _REPO_ROOT / "lambda" / "vector_index_manager"
-_LAYER_ASSET_DIR = _REPO_ROOT / "build" / "layer"
 
 
 class VectorIndex(Construct):
@@ -41,25 +40,15 @@ class VectorIndex(Construct):
     the implicit dependency CDK infers from referencing `table.table_arn`/`table_name`.
     """
 
-    def __init__(self, scope: Construct, construct_id: str, *, table: ITableV2) -> None:
+    def __init__(
+        self,
+        scope: Construct,
+        construct_id: str,
+        *,
+        table: ITableV2,
+        boto3_layer: LayerVersion,
+    ) -> None:
         super().__init__(scope, construct_id)
-
-        if not _LAYER_ASSET_DIR.exists():
-            raise RuntimeError(
-                f"{_LAYER_ASSET_DIR} does not exist - run `make build-layer` first "
-                "(or `make synth` / `make test`, which both depend on it). This "
-                "bundles a boto3/botocore new enough for search_vectors and "
-                "VectorIndexUpdates without needing Docker - see "
-                "docs/api-notes.md section (d)."
-            )
-
-        boto3_layer = LayerVersion(
-            self,
-            "Boto3Layer",
-            code=Code.from_asset(str(_LAYER_ASSET_DIR)),
-            compatible_runtimes=[Runtime.PYTHON_3_12],
-            removal_policy=RemovalPolicy.DESTROY,
-        )
 
         index_arn = f"{table.table_arn}/index/{VECTOR_INDEX_NAME}"
 

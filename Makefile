@@ -21,15 +21,15 @@ build-layer: ## Bundle a pinned boto3/botocore as a Lambda layer asset (no Docke
 		boto3==$(BOTO3_VERSION) botocore==$(BOTOCORE_VERSION) \
 		-t build/layer/python --no-cache-dir -q
 
-lint: check-secrets ## Lint and format-check everything
+lint: install check-secrets ## Lint and format-check everything
 	ruff check .
 	ruff format --check .
 
 check-secrets: ## Scan tracked files for a real AWS account ID (CLAUDE.md: no leaked identifiers)
 	python3 scripts/check_secrets.py
 
-test: build-layer ## Run the test suite (CDK template assertions, unit tests)
-	pytest -q
+test: install build-layer ## Run the test suite (CDK template assertions, unit tests)
+	python3 -m pytest -q
 
 synth: build-layer ## Synthesize CloudFormation without deploying
 	cd infra && cdk synth

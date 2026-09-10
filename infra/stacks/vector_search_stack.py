@@ -2,7 +2,8 @@
 
 Built incrementally - resources are added one build-order step at a time (see
 CLAUDE.md / commit history), each step verified with `cdk synth` before the next.
-This step: base table + vector index custom resource. No ingest/search Lambdas yet.
+This step: base table + vector index custom resource + ingest Lambda. No search
+Lambda yet.
 """
 
 from aws_cdk import CfnOutput, RemovalPolicy, Stack
@@ -15,7 +16,7 @@ from aws_cdk.aws_dynamodb import (
     TableV2,
 )
 from constructs import Construct
-from custom_constructs import VectorIndex
+from custom_constructs import IngestFunction, VectorIndex, build_boto3_layer
 
 
 class VectorSearchStack(Stack):
@@ -65,6 +66,11 @@ class VectorSearchStack(Stack):
             encryption=TableEncryptionV2.dynamo_owned_key(),
         )
 
+        # Built once and shared by every Lambda in this stack that needs a boto3 newer
+        # than the managed runtime's own bundled version (docs/api-notes.md section
+        # (d)) - one CloudFormation LayerVersion resource, not one per function.
+        self.boto3_layer = build_boto3_layer(self, "Boto3Layer")
+
         # `category` (the vector index's INLINE_FILTER attribute, see docs/api-notes.md's
         # "Filtering design for this demo") is deliberately NOT declared on the table
         # above. DynamoDB's CreateTable rejects any AttributeDefinitions entry that isn't
@@ -73,9 +79,20 @@ class VectorSearchStack(Stack):
         # VectorIndex adds it to AttributeDefinitions in its own UpdateTable call, in the
         # same request that adds the vector index whose SearchSchema references it -
         # exactly as docs/api-notes.md section (a) documents.
-        self.vector_index = VectorIndex(self, "VectorIndex", table=self.table)
+        self.vector_index = VectorIndex(
+            self, "VectorIndex", table=self.table, boto3_layer=self.boto3_layer
+        )
+
+        self.ingest_function = IngestFunction(
+            self, "IngestFunction", table=self.table, boto3_layer=self.boto3_layer
+        )
 
         CfnOutput(self, "TableName", value=self.table.table_name)
         CfnOutput(self, "TableArn", value=self.table.table_arn)
         CfnOutput(self, "VectorIndexName", value=self.vector_index.index_name)
         CfnOutput(self, "VectorIndexArn", value=self.vector_index.index_arn)
+        CfnOutput(
+            self,
+            "IngestFunctionName",
+            value=self.ingest_function.function.function_name,
+        )
