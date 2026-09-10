@@ -583,7 +583,7 @@ Citations:
 
 ---
 
-## Teardown finding: CDK Provider framework orphans two log groups (step 8 evidence, captured early)
+## Teardown finding: CDK Provider framework log groups (found, then fixed)
 
 Live-tested 2026-09-02, same deploy as the TableV2/GlobalTable test above. After
 `cdk destroy` reported full success (`✅ DynamoDBVectorSearchDemo: destroyed`, no
@@ -619,14 +619,23 @@ are created internally by `Provider`, not by us.
 **Deleted manually** (CLI `logs delete-log-group`) as part of this same test, and
 confirmed gone by a follow-up `describe-log-groups` call.
 
-**Mitigation considered but not yet applied:** `Provider`'s constructor accepts a
-`log_retention` parameter, which would at least bound these orphans to a finite
-CloudWatch retention window instead of "never expire" - reducing the severity
-(auto-expiring clutter) without eliminating the root cause (they'd still not be
-deleted by `cdk destroy` itself; they'd just stop existing on their own after the
-retention window). Whether to apply this, and/or add a documented manual cleanup
-step to the demo's own teardown instructions, is a decision for step 8 (the full
-deploy/run/destroy walkthrough), not resolved here.
+**Fixed** in `infra/custom_constructs/vector_index.py`: `Provider` accepts a
+`log_group` constructor prop - passing it an explicitly-declared `LogGroup`
+(`RetentionDays.ONE_WEEK`, `RemovalPolicy.DESTROY`) wires **all three** internal
+proxy Lambdas (`framework-onEvent`, `framework-isComplete`, and `framework-onTimeout`
+too, closing the same gap for the one proxy this test run happened not to invoke)
+to that one stack-managed log group via each proxy's own `LoggingConfig.LogGroup`,
+rather than leaving any of them to auto-create their own. Confirmed by inspecting
+the synthesized template directly (not just trusting the CDK prop's docstring):
+the log group renders as a single `AWS::Logs::LogGroup` resource with
+`DeletionPolicy: Delete`, and all three `framework-*` `AWS::Lambda::Function`
+resources reference it by `Ref` in their `LoggingConfig`. `tests/test_template.py`
+now asserts this generally (`test_no_implicit_lambda_log_groups`,
+`test_all_log_groups_removal_policy_is_delete`) so any future Lambda added to this
+stack - ours or a construct's internal one - is held to the same rule, not just
+this one. No manual post-`cdk destroy` cleanup step should be needed on the next
+live test; re-verify with `describe-log-groups` when step 8's deploy/destroy
+walkthrough runs, since the fix has not yet been confirmed against a real deploy.
 
 ---
 

@@ -63,11 +63,15 @@ describing what that step added. Don't batch multiple steps into one commit.
 ## Verify commands
 
 ```bash
+make check-secrets            # scans tracked files for a leaked AWS account ID
 ruff check .                  # lint
 ruff format --check .         # formatting
 cd infra && cdk synth         # safe; catches most CDK errors
 cd infra && cdk diff          # safe; shows what a deploy would change
 ```
+
+`make check-secrets` also runs automatically as a pre-commit hook (`.pre-commit-config.yaml`)
+once you've run `make install`, and as part of `make lint`.
 
 `cdk deploy` and `cdk destroy` cost real (if small) money and provision real
 infrastructure. Never run either without explicit confirmation in the current

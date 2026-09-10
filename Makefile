@@ -1,4 +1,4 @@
-.PHONY: install lint test synth diff clean build-layer
+.PHONY: install lint test synth diff clean build-layer check-secrets
 
 # boto3/botocore pinned to a version new enough for search_vectors/VectorIndexUpdates
 # (docs/api-notes.md section (d)) - the managed Lambda runtime's own bundled version
@@ -10,8 +10,9 @@
 BOTO3_VERSION := 1.43.87
 BOTOCORE_VERSION := 1.43.87
 
-install: ## Install CDK + dev dependencies
+install: ## Install CDK + dev dependencies, and register git hooks
 	python3 -m pip install -r infra/requirements.txt -r requirements-dev.txt
+	pre-commit install
 
 build-layer: ## Bundle a pinned boto3/botocore as a Lambda layer asset (no Docker)
 	rm -rf build/layer
@@ -20,9 +21,12 @@ build-layer: ## Bundle a pinned boto3/botocore as a Lambda layer asset (no Docke
 		boto3==$(BOTO3_VERSION) botocore==$(BOTOCORE_VERSION) \
 		-t build/layer/python --no-cache-dir -q
 
-lint: ## Lint and format-check everything
+lint: check-secrets ## Lint and format-check everything
 	ruff check .
 	ruff format --check .
+
+check-secrets: ## Scan tracked files for a real AWS account ID (CLAUDE.md: no leaked identifiers)
+	python3 scripts/check_secrets.py
 
 test: build-layer ## Run the test suite (CDK template assertions, unit tests)
 	pytest -q

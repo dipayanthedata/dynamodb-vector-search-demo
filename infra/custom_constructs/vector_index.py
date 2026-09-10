@@ -134,6 +134,25 @@ class VectorIndex(Construct):
             role=is_complete_role,
         )
 
+        # The Provider construct creates its own internal proxy Lambdas
+        # (framework-onEvent, framework-isComplete, framework-onTimeout) to drive its
+        # state machine - separate from OnEventHandler/IsCompleteHandler above, which
+        # are our own functions. Left at Provider's default, those proxies let Lambda
+        # auto-create their log groups implicitly on first invocation, with no
+        # CloudFormation record and no retention set - orphans that `cdk destroy`
+        # cannot remove (verified live: docs/api-notes.md, "Teardown finding: CDK
+        # Provider framework orphans two log groups"). Provider's `log_group` prop
+        # wires all three internal proxies to one explicit, stack-managed LogGroup
+        # instead, verified by inspecting the synthesized template: it appears as a
+        # single AWS::Logs::LogGroup with DeletionPolicy: Delete, referenced by each
+        # proxy Lambda's own LoggingConfig.LogGroup.
+        provider_framework_log_group = LogGroup(
+            self,
+            "ProviderFrameworkLogs",
+            retention=RetentionDays.ONE_WEEK,
+            removal_policy=RemovalPolicy.DESTROY,
+        )
+
         provider = Provider(
             self,
             "Provider",
@@ -147,6 +166,7 @@ class VectorIndex(Construct):
             # _MAX_WAIT_SECONDS in handler.py, ~11 minutes) so that message - not a
             # generic framework timeout - is what surfaces if something hangs.
             total_timeout=Duration.minutes(15),
+            log_group=provider_framework_log_group,
         )
 
         self.resource = CustomResource(

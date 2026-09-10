@@ -66,6 +66,48 @@ def test_no_nat_gateway_anywhere(template: Template) -> None:
     template.resource_count_is("AWS::EC2::NatGateway", 0)
 
 
+def test_no_implicit_lambda_log_groups(template: Template) -> None:
+    # Every Lambda function (including the CDK Provider framework's own internal
+    # onEvent/isComplete/onTimeout proxies) must be wired to an explicit,
+    # stack-managed LogGroup via LoggingConfig - not left to Lambda's default of
+    # auto-creating one implicitly on first invocation. An implicit log group has no
+    # CloudFormation record, so `cdk destroy` can't remove it - see docs/api-notes.md,
+    # "Teardown finding: CDK Provider framework orphans two log groups", and CLAUDE.md's
+    # "Full teardown" rule. Regression guardrail for the fix in
+    # infra/custom_constructs/vector_index.py (Provider's `log_group` prop).
+    rendered = template.to_json()
+    log_group_ids = {
+        logical_id
+        for logical_id, resource in rendered["Resources"].items()
+        if resource["Type"] == "AWS::Logs::LogGroup"
+    }
+    for logical_id, resource in rendered["Resources"].items():
+        if resource["Type"] != "AWS::Lambda::Function":
+            continue
+        logging_config = resource["Properties"].get("LoggingConfig")
+        assert logging_config and "LogGroup" in logging_config, (
+            f"{logical_id} has no explicit LogGroup wired via LoggingConfig - "
+            "it will orphan an implicitly-created log group on cdk destroy"
+        )
+        ref = logging_config["LogGroup"].get("Ref")
+        assert ref in log_group_ids, (
+            f"{logical_id}'s LoggingConfig.LogGroup does not reference a "
+            "stack-managed AWS::Logs::LogGroup resource"
+        )
+
+
+def test_all_log_groups_removal_policy_is_delete(template: Template) -> None:
+    # Every log group this stack creates (including the Provider framework's own,
+    # see test_no_implicit_lambda_log_groups above) must be removed by `cdk destroy` -
+    # CLAUDE.md's "Full teardown" rule.
+    rendered = template.to_json()
+    for logical_id, resource in rendered["Resources"].items():
+        if resource["Type"] == "AWS::Logs::LogGroup":
+            assert resource.get("DeletionPolicy") == "Delete", (
+                f"{logical_id} is missing RemovalPolicy.DESTROY"
+            )
+
+
 def test_no_iam_wildcard_resource(template: Template) -> None:
     # IAM scoped to exact resource ARNs, no wildcards - CLAUDE.md. Checked broadly
     # across every resource type CDK might embed a policy document in (standalone
