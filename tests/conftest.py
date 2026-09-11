@@ -3,6 +3,16 @@
 Guard against no-op tests (those that can pass without actually testing anything).
 A test with only `pass`, only a docstring, or empty body is a silent guardrail
 failure waiting to happen. Also catch tests with bodies but no assertions.
+
+GUARD LIMITATIONS (documented here so future readers don't assume completeness):
+1. Name-pattern matching on assert_*/has_resource helpers (e.g. stub.assert_*(),
+   template.has_resource()) cannot verify those helpers actually assert. They just
+   check method names in the AST. A call to a non-assertion helper with a similar
+   name could slip through.
+2. @pytest.mark.no_assert is an intentional escape hatch for tests that
+   legitimately have no assertions (e.g., checking a call doesn't raise). Use it
+   explicitly for visibility; do not silently allow test functions to pass with
+   zero checks.
 """
 
 import ast
