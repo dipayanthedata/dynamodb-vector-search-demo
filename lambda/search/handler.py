@@ -20,6 +20,7 @@ import os
 import time
 
 import boto3
+from botocore.exceptions import ClientError
 
 from shared.vector_config import (
     DISTANCE_FUNCTION,
@@ -140,13 +141,24 @@ def _search_vectors(
 
     try:
         response = _dynamodb.search_vectors(**kwargs)
-    except _dynamodb.exceptions.ResourceNotFoundException as e:
-        # Index not found - check if it's the "not ACTIVE yet" case
-        error_str = str(e)
-        if "ACTIVE" in error_str or "Backfilling" in error_str:
+    except ClientError as e:
+        error_code = e.response.get("Error", {}).get("Code")
+        if error_code == "ValidationException":
+            # Index still backfilling or search endpoint lagging management plane.
+            # Per docs/api-notes.md (a), even after DescribeTable reports ACTIVE,
+            # the separate search endpoint can briefly return ValidationException.
             raise ValueError(
-                f"Vector index {VECTOR_INDEX_NAME} is not yet ACTIVE. "
-                "Wait a few minutes after deployment before searching. "
+                f"Vector index {VECTOR_INDEX_NAME} is not yet ready for searching. "
+                "This can happen briefly even after deployment completes. "
+                "Wait a few moments and retry. "
+                f"Error: {e}"
+            ) from e
+        if error_code == "ResourceNotFoundException":
+            # Table or index does not exist. Check table/index names and that the
+            # stack deployed successfully.
+            raise ValueError(
+                f"Vector index {VECTOR_INDEX_NAME} not found on table {TABLE_NAME}. "
+                "Verify the table and index names, and that the stack deployed. "
                 f"Error: {e}"
             ) from e
         raise

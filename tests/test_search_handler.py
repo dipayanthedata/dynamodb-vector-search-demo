@@ -186,7 +186,9 @@ def test_search_raises_on_top_k_too_high(handler):
 
 
 def test_search_raises_on_index_not_active(handler):
-    # ResourceNotFoundException when index is still ACTIVE/Backfilling
+    # ValidationException when index is still backfilling or search endpoint is lagging.
+    # Stub message is illustrative/unverified; actual message depends on real behavior
+    # observed in step 8 deploy. See docs/api-notes.md (a) and (unverified note).
     query_embedding = [0.1] * 1024
     _stub_invoke_model(handler, query="not ready", embedding=query_embedding)
 
@@ -198,13 +200,35 @@ def test_search_raises_on_index_not_active(handler):
     _ = to_search_vector(query_embedding)  # Verify format without Stubber checking
     dynamodb_stub.add_client_error(
         "search_vectors",
-        service_error_code="ResourceNotFoundException",
-        service_message="Vector index embedding-index is not yet ACTIVE",
+        service_error_code="ValidationException",
+        service_message="[Illustrative message - actual error unverified pending step 8 deploy]",
     )
     dynamodb_stub.activate()
 
-    with pytest.raises(ValueError, match="not yet ACTIVE|Wait a few minutes"):
+    with pytest.raises(ValueError, match="not yet ready|Wait a few moments"):
         handler.handler({"query": "not ready"}, None)
+
+
+def test_search_raises_on_index_not_found(handler):
+    # ResourceNotFoundException when table or index does not exist.
+    # Stub message is illustrative/unverified; actual error depends on real behavior
+    # observed in step 8 deploy.
+    query_embedding = [0.1] * 1024
+    _stub_invoke_model(handler, query="missing", embedding=query_embedding)
+
+    from shared.vector_serialization import to_search_vector
+
+    dynamodb_stub = Stubber(handler._dynamodb)
+    _ = to_search_vector(query_embedding)  # Verify format without Stubber checking
+    dynamodb_stub.add_client_error(
+        "search_vectors",
+        service_error_code="ResourceNotFoundException",
+        service_message="[Illustrative message - actual error unverified pending step 8 deploy]",
+    )
+    dynamodb_stub.activate()
+
+    with pytest.raises(ValueError, match="not found|Verify the table"):
+        handler.handler({"query": "missing"}, None)
 
 
 def test_search_raises_on_bedrock_access_denied(handler):

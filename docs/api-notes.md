@@ -661,3 +661,38 @@ walkthrough runs, since the fix has not yet been confirmed against a real deploy
 
 7. **Vector writes, vector searches, and index storage bill separately from base table costs.**
    ✅ Confirmed. Three distinct pricing dimensions, matching the `ConsumedCapacity` response shape (`VectorSearchRequestBytes`, `VectorWriteRequestBytes`) confirmed directly in `API_SearchVectors`'s response syntax. Source: https://aws.amazon.com/dynamodb/pricing/ — fetched 2026-09-02 (pricing-page prose) + https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_SearchVectors.html — fetched 2026-09-02 (response shape).
+
+---
+
+## Behaviors documented in this repo but NOT yet independently verified (pending step 8 live deploy)
+
+The following behaviors are inferred from API documentation and implemented based on
+that inference, but have not been confirmed against real AWS API calls in this repo's
+deployed environment. Step 8's live deploy/demo will exercise them for real; until then,
+treat them as provisional:
+
+### SearchVectors exception behavior when index is not ACTIVE (section (a))
+
+**Documented:** `SearchVectors` returns `ValidationException` while the index is
+`Backfilling`, and can still return it briefly even after `DescribeTable` reports
+`IndexStatus: ACTIVE`, because the search endpoint lags the management plane.
+
+**Implemented in this repo:** `lambda/search/handler.py` catches `ValidationException`
+and translates it to a `ValueError` with a user-friendly "not yet ready, retry in a
+moment" message. Separately, it catches `ResourceNotFoundException` (for missing table
+or index) and translates that to a distinct "not found, check table/index names"
+message.
+
+**Test stubs:** `tests/test_search_handler.py` includes illustrative stubs for both
+exception paths with placeholder error messages marked as unverified. The actual error
+messages and timing behavior will be confirmed during step 8's real deploy.
+
+**Readiness check:** The vector index custom resource's `is_complete` handler
+(`lambda/vector_index_manager/handler.py` line 195–212) already probes with a real
+`SearchVectors` call to verify the search endpoint is ready, which aligns with this
+documented behavior. This probe will provide real-world confirmation or contradiction of
+the exception behavior when step 8 runs.
+
+To be re-visited: if step 8's real deploy shows different exception types or messages,
+update `lambda/search/handler.py`, `tests/test_search_handler.py`, and this section
+with the observed behavior.
