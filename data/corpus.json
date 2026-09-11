@@ -1,0 +1,302 @@
+[
+  {
+    "docId": "tech-001",
+    "text": "Machine learning models require large datasets for training and validation purposes.",
+    "category": "technology"
+  },
+  {
+    "docId": "tech-002",
+    "text": "Artificial intelligence has revolutionized how we process information automatically.",
+    "category": "technology"
+  },
+  {
+    "docId": "tech-003",
+    "text": "Cloud computing allows users to access computing resources over the internet without owning physical servers.",
+    "category": "technology"
+  },
+  {
+    "docId": "tech-004",
+    "text": "APIs enable different software systems to communicate with each other seamlessly.",
+    "category": "technology"
+  },
+  {
+    "docId": "tech-005",
+    "text": "Cybersecurity protects digital systems from malicious attacks and unauthorized access.",
+    "category": "technology"
+  },
+  {
+    "docId": "tech-006",
+    "text": "Docker containers package applications with all their dependencies for consistent deployment.",
+    "category": "technology"
+  },
+  {
+    "docId": "tech-007",
+    "text": "Neural networks simulate biological brains to solve complex computational problems.",
+    "category": "technology"
+  },
+  {
+    "docId": "tech-008",
+    "text": "Quantum computing exploits quantum mechanics to perform calculations exponentially faster.",
+    "category": "technology"
+  },
+  {
+    "docId": "tech-009",
+    "text": "Blockchain technology creates immutable records through distributed cryptographic ledgers.",
+    "category": "technology"
+  },
+  {
+    "docId": "tech-010",
+    "text": "DevOps practices merge software development with IT operations for faster deployment cycles.",
+    "category": "technology"
+  },
+  {
+    "docId": "tech-011",
+    "text": "The capacity to learn from examples without explicit programming rules defines modern automatic learning systems.",
+    "category": "technology"
+  },
+  {
+    "docId": "tech-012",
+    "text": "Remote procedure calls allow programs running on different machines to invoke functions across networks.",
+    "category": "technology"
+  },
+  {
+    "docId": "tech-013",
+    "text": "Data encryption scrambles information using mathematical algorithms to prevent unauthorized viewing.",
+    "category": "technology"
+  },
+  {
+    "docId": "tech-014",
+    "text": "Virtual reality immerses users in computer-generated three-dimensional environments for simulation.",
+    "category": "technology"
+  },
+  {
+    "docId": "tech-015",
+    "text": "Edge computing processes data near its source rather than sending everything to distant data centers.",
+    "category": "technology"
+  },
+  {
+    "docId": "health-001",
+    "text": "Regular cardiovascular exercise strengthens the heart and improves blood circulation.",
+    "category": "health"
+  },
+  {
+    "docId": "health-002",
+    "text": "A balanced diet rich in vitamins and minerals supports immune system function.",
+    "category": "health"
+  },
+  {
+    "docId": "health-003",
+    "text": "Sleep deprivation impairs cognitive function and emotional regulation in the human brain.",
+    "category": "health"
+  },
+  {
+    "docId": "health-004",
+    "text": "Meditation reduces stress levels through focused attention and breathing techniques.",
+    "category": "health"
+  },
+  {
+    "docId": "health-005",
+    "text": "Vaccines train the immune system to recognize and fight specific pathogens.",
+    "category": "health"
+  },
+  {
+    "docId": "health-006",
+    "text": "Hydration is essential for maintaining cellular function and metabolic processes.",
+    "category": "health"
+  },
+  {
+    "docId": "health-007",
+    "text": "Chronic inflammation contributes to many age-related degenerative diseases.",
+    "category": "health"
+  },
+  {
+    "docId": "health-008",
+    "text": "Regular physical activity maintains muscle mass and bone density throughout life.",
+    "category": "health"
+  },
+  {
+    "docId": "health-009",
+    "text": "Mental health is equally important as physical health for overall wellbeing.",
+    "category": "health"
+  },
+  {
+    "docId": "health-010",
+    "text": "Doctors diagnose illnesses by examining symptoms and running diagnostic tests.",
+    "category": "health"
+  },
+  {
+    "docId": "health-011",
+    "text": "The human body heals itself through natural biological regeneration and tissue repair processes.",
+    "category": "health"
+  },
+  {
+    "docId": "health-012",
+    "text": "Nutrition science studies how food components affect physiological health outcomes.",
+    "category": "health"
+  },
+  {
+    "docId": "health-013",
+    "text": "Pain management strategies range from pharmaceutical interventions to alternative therapies.",
+    "category": "health"
+  },
+  {
+    "docId": "health-014",
+    "text": "Preventive medicine focuses on keeping individuals healthy rather than treating disease.",
+    "category": "health"
+  },
+  {
+    "docId": "health-015",
+    "text": "Medical professionals trained in anatomy repair damaged tissues through surgical procedures.",
+    "category": "health"
+  },
+  {
+    "docId": "travel-001",
+    "text": "Tokyo is a vibrant metropolis known for its temples, gardens, and modern architecture.",
+    "category": "travel"
+  },
+  {
+    "docId": "travel-002",
+    "text": "The Swiss Alps provide stunning mountain landscapes for hiking and skiing adventures.",
+    "category": "travel"
+  },
+  {
+    "docId": "travel-003",
+    "text": "Cairo sits on the Nile River and houses ancient Egyptian monuments and museums.",
+    "category": "travel"
+  },
+  {
+    "docId": "travel-004",
+    "text": "Coastal cities offer beaches, seafood restaurants, and water sports activities.",
+    "category": "travel"
+  },
+  {
+    "docId": "travel-005",
+    "text": "Rain forests like the Amazon basin preserve incredible biodiversity and indigenous cultures.",
+    "category": "travel"
+  },
+  {
+    "docId": "travel-006",
+    "text": "Airplanes enable fast international travel across continents in hours rather than weeks.",
+    "category": "travel"
+  },
+  {
+    "docId": "travel-007",
+    "text": "Historical sites preserve artifacts and structures from past civilizations.",
+    "category": "travel"
+  },
+  {
+    "docId": "travel-008",
+    "text": "Desert regions like the Sahara offer unique landscapes and nomadic cultural experiences.",
+    "category": "travel"
+  },
+  {
+    "docId": "travel-009",
+    "text": "Hotels provide temporary lodging and amenities for travelers away from home.",
+    "category": "travel"
+  },
+  {
+    "docId": "travel-010",
+    "text": "Island destinations surrounded by ocean water attract visitors seeking relaxation.",
+    "category": "travel"
+  },
+  {
+    "docId": "travel-011",
+    "text": "Journeying to distant lands opens minds to different ways of living and thinking.",
+    "category": "travel"
+  },
+  {
+    "docId": "travel-012",
+    "text": "Trains traverse landscapes and connect cities across vast geographical regions.",
+    "category": "travel"
+  },
+  {
+    "docId": "travel-013",
+    "text": "Cultural festivals celebrate local traditions through music, dance, and culinary experiences.",
+    "category": "travel"
+  },
+  {
+    "docId": "travel-014",
+    "text": "Maps and guidebooks help visitors navigate unfamiliar cities and plan sightseeing routes.",
+    "category": "travel"
+  },
+  {
+    "docId": "travel-015",
+    "text": "Visiting foreign places exposes you to novel perspectives beyond your usual environment.",
+    "category": "travel"
+  },
+  {
+    "docId": "business-001",
+    "text": "Profit margins determine how much revenue remains after subtracting business expenses.",
+    "category": "business"
+  },
+  {
+    "docId": "business-002",
+    "text": "Market analysis studies consumer demand and competitive landscape trends.",
+    "category": "business"
+  },
+  {
+    "docId": "business-003",
+    "text": "Supply chain management coordinates the flow of materials from vendors to customers.",
+    "category": "business"
+  },
+  {
+    "docId": "business-004",
+    "text": "Investors provide capital in exchange for partial ownership or future returns.",
+    "category": "business"
+  },
+  {
+    "docId": "business-005",
+    "text": "Customer relationship management systems track interactions and sales opportunities.",
+    "category": "business"
+  },
+  {
+    "docId": "business-006",
+    "text": "Entrepreneurs launch new ventures by identifying market needs and developing solutions.",
+    "category": "business"
+  },
+  {
+    "docId": "business-007",
+    "text": "Branding creates distinct identity and emotional connections with target consumers.",
+    "category": "business"
+  },
+  {
+    "docId": "business-008",
+    "text": "Mergers combine two companies to achieve scale, eliminate competition, or access new markets.",
+    "category": "business"
+  },
+  {
+    "docId": "business-009",
+    "text": "Quarterly earnings reports summarize financial performance and shareholder returns.",
+    "category": "business"
+  },
+  {
+    "docId": "business-010",
+    "text": "Human resources departments recruit talent, manage payroll, and handle employee benefits.",
+    "category": "business"
+  },
+  {
+    "docId": "business-011",
+    "text": "Purchasing managers negotiate with suppliers to obtain materials at favorable prices.",
+    "category": "business"
+  },
+  {
+    "docId": "business-012",
+    "text": "Taxation policies influence corporate profitability and strategic financial planning.",
+    "category": "business"
+  },
+  {
+    "docId": "business-013",
+    "text": "Contractual agreements formalize business relationships and protect all parties' interests.",
+    "category": "business"
+  },
+  {
+    "docId": "business-014",
+    "text": "Financial institutions lend money to individuals and organizations for various purposes.",
+    "category": "business"
+  },
+  {
+    "docId": "business-015",
+    "text": "Market share represents the portion of total sales an organization captures within its industry.",
+    "category": "business"
+  }
+]

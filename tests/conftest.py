@@ -73,14 +73,20 @@ def pytest_configure(config):
                 continue
 
             # Skip: has a skip/xfail decorator (those are intentional)
-            decorators = {
-                d.id
-                if isinstance(d, ast.Name)
-                else d.func.id
-                if isinstance(d, ast.Attribute) and isinstance(d.func, ast.Name)
-                else None
-                for d in node.decorator_list
-            }
+            decorators = set()
+            for d in node.decorator_list:
+                if isinstance(d, ast.Name):
+                    decorators.add(d.id)
+                elif isinstance(d, ast.Call):
+                    # @pytest.mark.xfail(), @pytest.mark.skip(), etc.
+                    if isinstance(d.func, ast.Attribute) and isinstance(
+                        d.func.value, ast.Name
+                    ):
+                        decorators.add(d.func.attr)
+                    elif isinstance(d.func, ast.Name):
+                        decorators.add(d.func.id)
+                elif isinstance(d, ast.Attribute):
+                    decorators.add(d.attr)
             if decorators & {"skip", "skipif", "xfail"}:
                 continue  # Intentionally skipped tests are allowed
 
