@@ -125,3 +125,71 @@ def test_ingest_raises_on_embedding_dimension_mismatch(handler):
 
     with pytest.raises(ValueError, match="dimension"):
         handler.handler({"docId": "doc-3", "text": "wrong size"}, None)
+
+
+def test_ingest_raises_on_bedrock_throttling(handler):
+    # Bedrock throttling is a transient error; handler should propagate it clearly
+    stub = Stubber(handler._bedrock)
+    stub.add_client_error(
+        "invoke_model",
+        service_error_code="ThrottlingException",
+        service_message="Rate exceeded",
+    )
+    stub.activate()
+
+    with pytest.raises(Exception, match="ThrottlingException|throttl"):
+        handler.handler({"docId": "doc-4", "text": "throttled"}, None)
+
+
+def test_ingest_raises_on_bedrock_access_denied(handler):
+    # AccessDeniedException means user doesn't have Titan model access - error must be clear
+    stub = Stubber(handler._bedrock)
+    stub.add_client_error(
+        "invoke_model",
+        service_error_code="AccessDeniedException",
+        service_message="User is not authorized to perform: bedrock:InvokeModel on resource",
+    )
+    stub.activate()
+
+    with pytest.raises(
+        Exception, match="AccessDenied|Titan|not.*authorized|permission"
+    ):
+        handler.handler({"docId": "doc-5", "text": "no access"}, None)
+
+
+def test_ingest_raises_on_malformed_embedding_response(handler):
+    # Bedrock response missing embedding field
+    stub = Stubber(handler._bedrock)
+    stub.add_response(
+        "invoke_model",
+        {
+            "body": io.BytesIO(json.dumps({"inputTextTokenCount": 5}).encode()),
+            "contentType": "application/json",
+        },
+        {
+            "modelId": "amazon.titan-embed-text-v2:0",
+            "body": json.dumps(
+                {"inputText": "malformed", "dimensions": 3, "normalize": True}
+            ),
+        },
+    )
+    stub.activate()
+
+    with pytest.raises(KeyError, match="embedding"):
+        handler.handler({"docId": "doc-6", "text": "malformed"}, None)
+
+
+def test_ingest_raises_on_dynamodb_put_failure(handler):
+    # DynamoDB write fails
+    _stub_invoke_model(handler, input_text="db error", embedding=[0.5, 0.5, 0.5])
+
+    dynamodb_stub = Stubber(handler._dynamodb)
+    dynamodb_stub.add_client_error(
+        "put_item",
+        service_error_code="ValidationException",
+        service_message="One or more parameter values are invalid",
+    )
+    dynamodb_stub.activate()
+
+    with pytest.raises(Exception, match="ValidationException"):
+        handler.handler({"docId": "doc-7", "text": "db error"}, None)
