@@ -142,7 +142,8 @@ def _search_vectors(
         response = _dynamodb.search_vectors(**kwargs)
     except _dynamodb.exceptions.ResourceNotFoundException as e:
         # Index not found - check if it's the "not ACTIVE yet" case
-        if "INDEX_ACTIVE" in str(e) or "Backfilling" in str(e):
+        error_str = str(e)
+        if "ACTIVE" in error_str or "Backfilling" in error_str:
             raise ValueError(
                 f"Vector index {VECTOR_INDEX_NAME} is not yet ACTIVE. "
                 "Wait a few minutes after deployment before searching. "
