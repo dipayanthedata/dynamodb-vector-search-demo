@@ -68,49 +68,49 @@ def main():
     print("DynamoDB Vector Search Demo")
     print("=" * 70)
 
-    # Query 1: Semantic match - "rapid transportation" should match docs about fast travel
-    print("\n[Query 1] Semantic match - 'rapid transportation'")
-    print("(Should match docs about fast travel methods)")
+    # Query 1: Semantic-only - no keyword matches in expected results
+    print("\n[Query 1] Semantic-only - 'rapid transportation'")
+    print("(No keywords match expected travel docs)")
     try:
         results = _invoke_search("rapid transportation")
         _print_results("rapid transportation", results)
     except RuntimeError as e:
         print(f"Error: {e}", file=sys.stderr)
 
-    # Query 2: Semantic match - "monetary exchange" should match docs about trading/currency
+    # Query 2: Mixed - partial keyword matches
     print("\n" + "=" * 70)
-    print("[Query 2] Semantic match - 'monetary exchange'")
-    print("(Should match business/finance docs about money and trading)")
+    print("[Query 2] Mixed - 'monetary exchange'")
+    print("(Some keyword matches in business docs)")
     try:
         results = _invoke_search("monetary exchange")
         _print_results("monetary exchange", results)
     except RuntimeError as e:
         print(f"Error: {e}", file=sys.stderr)
 
-    # Query 3: Keyword match - "artificial intelligence"
+    # Query 3: Keyword-favorable - keywords present
     print("\n" + "=" * 70)
-    print("[Query 3] Keywords present - 'artificial intelligence'")
-    print("(Should match tech docs with explicit keywords)")
+    print("[Query 3] Keyword-favorable - 'machine learning'")
+    print("(Keywords explicitly present in results)")
     try:
-        results = _invoke_search("artificial intelligence")
-        _print_results("artificial intelligence", results)
+        results = _invoke_search("machine learning")
+        _print_results("machine learning", results)
     except RuntimeError as e:
         print(f"Error: {e}", file=sys.stderr)
 
-    # Query 4: Semantic match - "learning systems" as paraphrase for ML
+    # Query 4: Semantic-only - no keyword matches
     print("\n" + "=" * 70)
-    print("[Query 4] Semantic match - 'automatic learning systems'")
-    print("(Paraphrase of machine learning - no exact keyword match)")
+    print("[Query 4] Semantic-only - 'foundational connectivity infrastructure'")
+    print("(Complex semantic query, no direct keywords match)")
     try:
-        results = _invoke_search("automatic learning systems")
-        _print_results("automatic learning systems", results)
+        results = _invoke_search("foundational connectivity infrastructure")
+        _print_results("foundational connectivity infrastructure", results)
     except RuntimeError as e:
         print(f"Error: {e}", file=sys.stderr)
 
-    # Query 5: With category filter - unfiltered first, then filtered
+    # Query 5: Mixed - with category filter demonstration
     print("\n" + "=" * 70)
-    print("[Query 5a] Unfiltered - 'healing processes' (all categories)")
-    print("(Should match health docs)")
+    print("[Query 5a] Mixed (unfiltered) - 'healing processes'")
+    print("(Some keyword matches in health docs, all categories)")
     try:
         results = _invoke_search("healing processes")
         _print_results("healing processes", results)
@@ -118,17 +118,17 @@ def main():
         print(f"Error: {e}", file=sys.stderr)
 
     print("\n[Query 5b] SAME QUERY with category filter: health only")
-    print("(Results should be filtered to health category only)")
+    print("(Compare unfiltered vs. filtered results)")
     try:
         results = _invoke_search("healing processes", category="health")
         _print_results("healing processes (category=health)", results)
     except RuntimeError as e:
         print(f"Error: {e}", file=sys.stderr)
 
-    # Query 6: Semantic - "physician" should match "doctors" and medical professionals
+    # Query 6: Semantic-only - no keyword matches
     print("\n" + "=" * 70)
-    print("[Query 6] Semantic match - 'physician expertise'")
-    print("(Should match health docs about doctors and medical professionals)")
+    print("[Query 6] Semantic-only - 'physician expertise'")
+    print("(No keywords match health docs)")
     try:
         results = _invoke_search("physician expertise")
         _print_results("physician expertise", results)

@@ -106,8 +106,8 @@ def main():
     queries = [
         ("rapid transportation", None),
         ("monetary exchange", None),
-        ("artificial intelligence", None),
-        ("automatic learning systems", None),
+        ("machine learning", None),
+        ("foundational connectivity infrastructure", None),
         ("healing processes", None),
         ("healing processes", "health"),
         ("physician expertise", None),
