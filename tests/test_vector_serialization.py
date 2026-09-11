@@ -100,17 +100,6 @@ def test_all_zeros_vector():
     assert result == {"L": [{"N": "0.0"}, {"N": "0.0"}, {"N": "0.0"}]}
 
 
-def test_wrong_dimension_count_raises():
-    # Vector has 2 elements; index expects 3 (from EMBEDDING_DIMENSIONS).
-    # Handler must validate this before calling these functions - this test
-    # documents the expectation, not the function's own validation.
-    # The serializer itself doesn't validate dimension count (that's the handler's job);
-    # this test would be in handler tests, not here. For completeness in the
-    # serialization module's contract: it has no dimension validation.
-    # Omitting this test as it's handler responsibility, not serializer.
-    pass
-
-
 def test_nan_rejected():
     # NaN must be rejected with a clear error, not silently produce garbage.
     with pytest.raises((ValueError, TypeError)):
