@@ -1,2 +1,0 @@
-This file mentions PwC in the content.
-It should be blocked by check-secrets.

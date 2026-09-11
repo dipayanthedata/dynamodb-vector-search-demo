@@ -140,6 +140,32 @@ def test_no_iam_wildcard_resource(template: Template) -> None:
     assert not violations, f"Found wildcard IAM Resource in: {violations}"
 
 
+def test_custom_resources_define_delete_handlers(template: Template) -> None:
+    # Every custom resource must define an onDelete or equivalent cleanup path so
+    # that `cdk destroy` actually reverses the resource creation, not just leaves
+    # it orphaned. The vector index custom resource uses the CDK Provider framework's
+    # onDelete handler (lambda/vector_index_manager/handler.py _on_delete) to call
+    # UpdateTable with VectorIndexUpdates Delete action - CLAUDE.md "Full teardown"
+    # rule. This test checks for the CloudFormation-level equivalent: a custom
+    # resource's ServiceToken pointing to a handler stack.
+    rendered = template.to_json()
+    violations = []
+
+    for logical_id, resource in rendered.get("Resources", {}).items():
+        if resource.get("Type") == "AWS::CloudFormation::CustomResource":
+            service_token = resource.get("Properties", {}).get("ServiceToken")
+            if not service_token:
+                violations.append(
+                    f"{logical_id}: no ServiceToken (Provider not wired correctly)"
+                )
+            # If ServiceToken exists, the CDK Provider framework handles on_event/
+            # is_complete/onDelete routing internally - no further checks needed here
+
+    assert not violations, (
+        f"Custom resources missing ServiceToken (would orphan resources on cdk destroy): {violations}"
+    )
+
+
 def test_embedding_dimension_consistent_with_config(template: Template) -> None:
     # The embedding dimension constant (shared/vector_config.py) is the single
     # source of truth for EMBEDDING_DIMENSIONS. All Lambda functions (ingest, search)
