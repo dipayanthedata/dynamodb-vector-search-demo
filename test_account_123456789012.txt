@@ -1,2 +1,0 @@
-# Fake test file with a 12-digit account ID: 123456789012
-This is for testing the pre-commit hook.

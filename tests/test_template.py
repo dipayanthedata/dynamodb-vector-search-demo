@@ -8,6 +8,8 @@ import pytest
 from aws_cdk.assertions import Template
 from stacks import VectorSearchStack
 
+from shared.vector_config import EMBEDDING_DIMENSIONS
+
 
 @pytest.fixture(scope="module")
 def template() -> Template:
@@ -136,3 +138,30 @@ def test_no_iam_wildcard_resource(template: Template) -> None:
             walk(resource, logical_id)
 
     assert not violations, f"Found wildcard IAM Resource in: {violations}"
+
+
+def test_embedding_dimension_consistent_with_config(template: Template) -> None:
+    # The embedding dimension constant (shared/vector_config.py) is the single
+    # source of truth for EMBEDDING_DIMENSIONS. All Lambda functions (ingest, search)
+    # must read it from environment variables set by the CDK constructs that import
+    # the shared constant. This test verifies the constant value makes it into the
+    # template, so a divergence between shared/vector_config.py and the CDK code
+    # (or a typo in environment variable name) gets caught immediately, not at deploy
+    # time. Related to CLAUDE.md rule: "Never invent an AWS API parameter."
+    rendered = template.to_json()
+
+    ingest_found = False
+    for logical_id, resource in rendered["Resources"].items():
+        if resource["Type"] != "AWS::Lambda::Function":
+            continue
+        env_vars = resource["Properties"].get("Environment", {}).get("Variables", {})
+        if "EMBEDDING_DIMENSIONS" in env_vars:
+            value = int(env_vars["EMBEDDING_DIMENSIONS"])
+            assert value == EMBEDDING_DIMENSIONS, (
+                f"{logical_id} has EMBEDDING_DIMENSIONS={value}, expected {EMBEDDING_DIMENSIONS}"
+            )
+            ingest_found = True
+
+    assert ingest_found, (
+        "No Lambda function found with EMBEDDING_DIMENSIONS env var - ingest handler may not be deployed"
+    )
