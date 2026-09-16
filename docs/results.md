@@ -32,20 +32,20 @@ Measured across 20 iterations of demo.py (140 total queries across 6 query types
 
 | Percentile | Latency |
 |-----------|---------|
-| Min | 211.30ms |
-| p50 | 265.10ms |
-| p95 | 307.30ms |
-| p99 | 394.60ms |
-| Max | 694.30ms |
-| Mean | 272.53ms |
-| Stdev | 44.64ms |
+| Min (warm) | 211.30ms |
+| p50 (warm) | 265.10ms |
+| p95 (warm) | 307.30ms |
+| p99 (warm) | 394.60ms |
+| Max (warm) | 694.30ms |
+| Mean (warm) | 272.53ms |
+| Stdev (warm) | 44.64ms |
 
-Warm end-to-end latency breakdown (typical query):
+**Cold-start (first invocation):** 765.23ms total (embed=438.77ms, search=326.46ms)
+
+**Warm breakdown (typical query):**
 - Bedrock embedding: 111-145ms
 - DynamoDB SearchVectors: 130-160ms
 - Total: 242-289ms per query
-
-**Note:** Cold-start outlier at 694.30ms likely reflects Java garbage collection in Bedrock model loading. Warm p50 (265.10ms) reflects steady-state performance.
 
 ## Step 9: Vector vs Keyword Search Comparison
 
@@ -246,26 +246,28 @@ Observations:
 
 ### Per-Query Comparison
 
-| Query | Type | Vector Results | Keyword Results | Vector Found | Keyword Found |
-|-------|------|---|---|---|---|
-| rapid transportation | semantic-only | travel-006 (0.644), travel-012 (0.797) | **NONE** | travel-006, travel-012 | — |
-| monetary exchange | mixed | business-014 (0.843) | business-004 (1 match) | business-014 | business-004 |
-| machine learning | keyword-favorable | tech-001 (0.474), tech-011 (0.631), tech-002 (0.749) | tech-001 (2 matches), tech-011 (1 match), tech-012 (1 match) | tech-001, tech-011, tech-002 | tech-001, tech-011, tech-012 |
-| foundational connectivity infrastructure | semantic-only | tech-004 (0.859), tech-015 (0.878) | **NONE** | tech-004, tech-015 | — |
-| healing processes | mixed | health-011 (0.437), health-015 (0.733), health-014 (0.802) | health-006 (1 match), health-011 (1 match), tech-015 (1 match) | health-011, health-015, health-014 | health-006, health-011 |
-| physician expertise | semantic-only | health-010 (0.660), health-015 (0.751) | **NONE** | health-010, health-015 | — |
+| Query | Type | Vector Results | Keyword Results | False Positives |
+|-------|------|---|---|---|
+| rapid transportation | semantic-only | travel-006 (0.644), travel-012 (0.797) | **NONE** | — |
+| monetary exchange | mixed | business-014 (0.843) | business-004 (1 match) | none |
+| machine learning | keyword-favorable | tech-001 (0.474), tech-011 (0.631), tech-002 (0.749) | tech-001 (2 matches), tech-011 (1 match), tech-012 (1 match) | tech-012 (substring: "different machines") |
+| foundational connectivity infrastructure | semantic-only | tech-004 (0.859), tech-015 (0.878) | **NONE** | — |
+| healing processes | mixed | health-011 (0.437), health-015 (0.733), health-014 (0.802) | health-006 (1 match), health-011 (1 match), tech-015 (1 match) | tech-015 (substring: "processes data"), health-006 (substring: "metabolic processes") |
+| physician expertise | semantic-only | health-010 (0.660), health-015 (0.751) | **NONE** | — |
 
-### Latency Comparison
+### Latency Comparison (Warm Lambda)
 
-| Metric | Vector Search | Keyword Search |
-|--------|---|---|
-| Query 1: rapid transportation | 717.7ms total | 1545.7ms scan |
-| Query 2: monetary exchange | 402.2ms total | 990.2ms scan |
-| Query 3: machine learning | 257.5ms total | 1028.7ms scan |
-| Query 4: foundational connectivity infrastructure | 280.3ms total | 964.7ms scan |
-| Query 5: healing processes | 360.1ms total | 1050.1ms scan |
-| Query 5b: healing processes (filtered) | 294.7ms total | 944.8ms scan |
-| Query 6: physician expertise | 262.4ms total | 930.5ms scan |
+| Query | Vector Search | Keyword Scan |
+|-------|---|---|
+| rapid transportation | 717.7ms | 1545.7ms |
+| monetary exchange | 402.2ms | 990.2ms |
+| machine learning | 257.5ms | 1028.7ms |
+| foundational connectivity infrastructure | 280.3ms | 964.7ms |
+| healing processes | 360.1ms | 1050.1ms |
+| healing processes (filtered) | 294.7ms | 944.8ms |
+| physician expertise | 262.4ms | 930.5ms |
+
+**Note:** Query 1 (rapid transportation) includes cold-start timing for vector search first invocation (765ms baseline reported separately above). Remaining queries are warm-cache timings.
 
 ### Zero-Keyword-Match Queries
 
