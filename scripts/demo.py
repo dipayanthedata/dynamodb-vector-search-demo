@@ -8,13 +8,17 @@ Usage: python3 scripts/demo.py
 """
 
 import json
+import os
 import sys
 
 import boto3
 
-# Lambda function names from CDK stack
-_LAMBDA_SEARCH = "DynamoDBVectorSearchDemo-SearchHandler"
-_lambda_client = boto3.client("lambda")
+# Lambda function names from CDK stack (can override via SEARCH_FUNCTION_NAME env var)
+_LAMBDA_SEARCH = os.environ.get(
+    "SEARCH_FUNCTION_NAME", "DynamoDBVectorSearchDemo-SearchHandler"
+)
+_REGION = os.environ.get("AWS_REGION") or os.environ.get("AWS_DEFAULT_REGION", "us-east-1")
+_lambda_client = boto3.client("lambda", region_name=_REGION)
 
 
 def _invoke_search(query: str, top_k: int = 3, category: str | None = None) -> dict:

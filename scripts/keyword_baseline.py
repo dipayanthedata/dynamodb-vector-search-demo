@@ -18,7 +18,8 @@ import boto3
 _REPO_ROOT = Path(__file__).resolve().parent.parent
 _CORPUS_PATH = _REPO_ROOT / "data" / "corpus.json"
 
-_dynamodb = boto3.client("dynamodb")
+_REGION = os.environ.get("AWS_REGION") or os.environ.get("AWS_DEFAULT_REGION", "us-east-1")
+_dynamodb = boto3.client("dynamodb", region_name=_REGION)
 
 
 def _keyword_search(query: str, category: str | None = None) -> dict:
