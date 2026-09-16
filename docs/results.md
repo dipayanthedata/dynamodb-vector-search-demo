@@ -47,7 +47,7 @@ Measured across 20 iterations of demo.py (140 total queries across 6 query types
 - DynamoDB SearchVectors: 130-160ms
 - Total: 242-289ms per query
 
-**Note on distribution:** The 694.30ms max in the distribution above is from the 20-run warm-cache test and represents a single outlier execution (cause unknown; possibly GC or network variance). It is not a cold-start measurement.
+**Note on distribution:** The 694.30ms max in the distribution above is from the 20-run warm-cache test and represents a single outlier execution (cause not determined). It is not a cold-start measurement.
 
 ## Step 9: Vector vs Keyword Search Comparison
 
@@ -268,7 +268,7 @@ Observations:
 | healing processes (filtered) | 294.7ms | 944.8ms |
 | physician expertise | 262.4ms | 930.5ms |
 
-**Note:** Query 1 (rapid transportation) was the first invocation in this session and included cold-start overhead (first invocation measured separately: 765.23ms total). All other queries ran with warm Lambda cache.
+**Note:** The first invocation in this session (rapid transportation query) included cold-start overhead. This is measured separately above: 765.23ms total. All rows in this table ran with warm Lambda cache.
 
 ### Zero-Keyword-Match Queries
 
