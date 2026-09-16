@@ -714,3 +714,15 @@ the exception behavior when step 8 runs.
 To be re-visited: if step 8's real deploy shows different exception types or messages,
 update `lambda/search/handler.py`, `tests/test_search_handler.py`, and this section
 with the observed behavior.
+
+---
+
+## Observed: IndexSizeBytes Metric Lag
+
+**Observed 2026-09-16:** After seeding a 60-document index (1024 dims, ~0.46s per doc),
+the vector index `IndexSizeBytes` metric reported 0 for ~6 hours post-completion. This
+is not a sign that the index is empty — the SearchVectors API returned live results and
+correct scores throughout. DynamoDB's size metrics update on an internal cycle (~6 hours),
+so fresh indexes will report 0 bytes until the next metric refresh, even after successful
+backfill and active serving. Do not assume an index is empty based on IndexSizeBytes=0
+immediately after deployment.
