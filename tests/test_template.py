@@ -235,6 +235,45 @@ def test_boto3_layer_deployed(template: Template) -> None:
     template.resource_count_is("AWS::Lambda::LayerVersion", 1)
 
 
+def test_search_vectors_policy_scoped_to_index_arn(template: Template) -> None:
+    # SearchVectors IAM action requires the vector INDEX ARN
+    # (arn:aws:dynamodb:region:account:table/NAME/index/INDEX), not table ARN.
+    # CloudFormation renders this as Fn::Join of table ARN + "/index/INDEX".
+    # This test verifies the construct includes /index/ in the resource.
+    # If resources=[table.table_arn] instead, this assertion fails.
+    import json
+
+    rendered = template.to_json()
+    found_search_vectors_with_index = False
+
+    for rid, resource in rendered["Resources"].items():
+        if resource["Type"] != "AWS::IAM::Policy":
+            continue
+        if "SearchFunction" not in rid:
+            continue
+        doc = resource["Properties"].get("PolicyDocument", {})
+        for stmt in doc.get("Statement", []):
+            actions = stmt.get("Action", [])
+            if isinstance(actions, str):
+                actions = [actions]
+            if "dynamodb:SearchVectors" not in actions:
+                continue
+            # Found SearchVectors statement. Serialize Resource to JSON to check
+            # for /index/ in the rendered form (CDK uses Fn::Join for ARNs).
+            res = stmt.get("Resource")
+            res_str = json.dumps(res)
+            # Index ARN format: arn:aws:dynamodb:region:account:table/X/index/Y
+            # Fn::Join concatenates table ARN + "/index/INDEX_NAME"
+            if "/index/" in res_str:
+                found_search_vectors_with_index = True
+
+    assert found_search_vectors_with_index, (
+        "SearchVectors IAM policy not found on SearchFunction with index ARN. "
+        "Must use vector_index.index_arn, not table.table_arn. "
+        "The rendered resource should contain /index/ when serialized."
+    )
+
+
 def test_lambda_function_count(template: Template) -> None:
     # The stack deploys exactly 5 Lambda functions:
     # - IngestFunction/Function (user-deployed, embeds & writes)

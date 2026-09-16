@@ -434,6 +434,16 @@ separate additional wait beyond `IndexStatus` reaching `ACTIVE`. Don't read too
 much into that - it's one data point on an empty table, not a guarantee the
 search-endpoint lag is always zero.
 
+**Cold-start Lambda timing (SearchFunction, empty table):** Single invocation against
+a cold SearchFunction immediately post-deploy, before any corpus loaded:
+- Bedrock embedding: **438.77ms**
+- DynamoDB SearchVectors: **326.46ms**
+- Total: **765.23ms**
+
+This captures cold-start (JIT compilation, endpoint initialization). Warm cached
+p50 latency is expected to be substantially lower and is measured separately in
+the demo's 20-run latency distribution (see scripts/demo.py results section).
+
 **Confirmed working end to end:** the reverse direction (`UpdateTable` with a
 `Delete` vector-index action) against the same `GlobalTable`-backed table also
 succeeded cleanly on `cdk destroy`, with no manual cleanup needed - see the
@@ -684,8 +694,16 @@ or index) and translates that to a distinct "not found, check table/index names"
 message.
 
 **Test stubs:** `tests/test_search_handler.py` includes illustrative stubs for both
-exception paths with placeholder error messages marked as unverified. The actual error
-messages and timing behavior will be confirmed during step 8's real deploy.
+exception paths with placeholder error messages marked as unverified. Capture attempts
+during step 8 deploy:
+- **Attempt 1 (deploy 1):** Missed — IAM permissions on SearchFunction were incorrect
+  (used table ARN instead of index ARN), causing AccessDeniedException instead of the
+  ValidationException during backfill. Fixed in step 6 commit cbff7e1.
+- **Attempt 2 (redeploy post-fix):** Missed — index backfill completed before search
+  polling started (timing window ~9 minutes, started polling ~10 minutes post-deploy).
+  
+The actual ValidationException behavior remains unverified. Handler's exception handling
+(lines 146-154 in lambda/search/handler.py) is defensive and untested at this point.
 
 **Readiness check:** The vector index custom resource's `is_complete` handler
 (`lambda/vector_index_manager/handler.py` line 195–212) already probes with a real
