@@ -140,14 +140,13 @@ def test_no_iam_wildcard_resource(template: Template) -> None:
     assert not violations, f"Found wildcard IAM Resource in: {violations}"
 
 
-def test_custom_resources_define_delete_handlers(template: Template) -> None:
-    # Every custom resource must define an onDelete or equivalent cleanup path so
-    # that `cdk destroy` actually reverses the resource creation, not just leaves
-    # it orphaned. The vector index custom resource uses the CDK Provider framework's
-    # onDelete handler (lambda/vector_index_manager/handler.py _on_delete) to call
-    # UpdateTable with VectorIndexUpdates Delete action - CLAUDE.md "Full teardown"
-    # rule. This test checks for the CloudFormation-level equivalent: a custom
-    # resource's ServiceToken pointing to a handler stack.
+def test_custom_resources_wired_to_provider(template: Template) -> None:
+    # Every custom resource must have a ServiceToken wired to a CDK Provider so
+    # the framework routes CloudFormation Delete events to an onDelete handler.
+    # The actual delete logic (UpdateTable with VectorIndexUpdates Delete) is
+    # tested in unit tests (tests/test_vector_index_manager_handler.py
+    # test_on_delete_calls_update_table_with_delete) - this is just a template
+    # structure check that the wiring is present.
     rendered = template.to_json()
     violations = []
 
@@ -156,14 +155,10 @@ def test_custom_resources_define_delete_handlers(template: Template) -> None:
             service_token = resource.get("Properties", {}).get("ServiceToken")
             if not service_token:
                 violations.append(
-                    f"{logical_id}: no ServiceToken (Provider not wired correctly)"
+                    f"{logical_id}: no ServiceToken (Provider not wired for delete routing)"
                 )
-            # If ServiceToken exists, the CDK Provider framework handles on_event/
-            # is_complete/onDelete routing internally - no further checks needed here
 
-    assert not violations, (
-        f"Custom resources missing ServiceToken (would orphan resources on cdk destroy): {violations}"
-    )
+    assert not violations, f"Custom resources missing ServiceToken: {violations}"
 
 
 def test_embedding_dimension_consistent_with_config(template: Template) -> None:
