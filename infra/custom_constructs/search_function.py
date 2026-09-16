@@ -25,6 +25,7 @@ from shared.vector_config import (
 )
 
 from .lambda_asset import stage_lambda_asset
+from .vector_index import VectorIndex
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 _LAMBDA_ASSET_DIR = _REPO_ROOT / "lambda" / "search"
@@ -37,6 +38,7 @@ class SearchFunction(Construct):
         construct_id: str,
         *,
         table: ITableV2,
+        vector_index: VectorIndex,
         boto3_layer: LayerVersion,
     ) -> None:
         super().__init__(scope, construct_id)
@@ -54,11 +56,13 @@ class SearchFunction(Construct):
             removal_policy=RemovalPolicy.DESTROY,
         )
         role = self._bare_lambda_role(log_group)
-        # SearchVectors is a table-level action - scoped to the table ARN.
+        # SearchVectors requires the vector index ARN, not the table ARN.
+        # Format: arn:aws:dynamodb:region:account:table/table-name/index/index-name
+        # See docs/api-notes.md for details.
         role.add_to_principal_policy(
             PolicyStatement(
                 actions=["dynamodb:SearchVectors"],
-                resources=[table.table_arn],
+                resources=[vector_index.index_arn],
             )
         )
         role.add_to_principal_policy(

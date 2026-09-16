@@ -97,7 +97,11 @@ class VectorSearchStack(Stack):
         )
 
         self.search_function = SearchFunction(
-            self, "SearchFunction", table=self.table, boto3_layer=self.boto3_layer
+            self,
+            "SearchFunction",
+            table=self.table,
+            vector_index=self.vector_index,
+            boto3_layer=self.boto3_layer,
         )
 
         CfnOutput(self, "TableName", value=self.table.table_name)
