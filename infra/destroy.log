@@ -1,0 +1,25 @@
+b'!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n'
+b'!!                                                                                                                      !!\n'
+b'!!  This software has not been tested with node v26.5.0.                                                                !!\n'
+b'!!  Should you encounter odd runtime issues, please try using one of the supported release before filing a bug report.  !!\n'
+b'!!                                                                                                                      !!\n'
+b'!!  This software is currently running on node v26.5.0.                                                                 !!\n'
+b'!!  As of the current release of this software, supported node releases are:                                            !!\n'
+b'!!  - ^24.0.0 (Planned end-of-life: 2028-04-30)                                                                         !!\n'
+b'!!  - ^22.0.0 (Planned end-of-life: 2027-04-30)                                                                         !!\n'
+b'!!  - ^20.0.0 (Planned end-of-life: 2026-04-30) [DEPRECATED]                                                            !!\n'
+b'!!                                                                                                                      !!\n'
+b'!!  This warning can be silenced by setting the JSII_SILENCE_WARNING_UNTESTED_NODE_VERSION environment variable.        !!\n'
+b'!!                                                                                                                      !!\n'
+b'!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n'
+[WARNING] aws-cdk-lib.aws_dynamodb.TableGrantsProps#encryptedResource is deprecated.
+  - Leave this field undefined. If the table is encrypted with a customer-managed KMS key, appropriate
+grants to the key will be automatically added.
+  This API will be removed in the next major release.
+[WARNING] aws-cdk-lib.aws_dynamodb.TableGrantsProps#policyResource is deprecated.
+  - Leave this field undefined. A best-effort attempt will be made to discover a resource policy and add
+permissions to it.
+  This API will be removed in the next major release.
+DynamoDBVectorSearchDemo: destroying... [1/1]
+❌  DynamoDBVectorSearchDemo: destroy failed UnresolvedAccount: Unable to resolve AWS account to use. It must be either configured when you define your CDK Stack, or through the environment
+Unable to resolve AWS account to use. It must be either configured when you define your CDK Stack, or through the environment

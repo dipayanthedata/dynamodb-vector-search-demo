@@ -1,9 +1,13 @@
 """DynamoDB native vector search demo: base table, vector index, ingest + search Lambdas.
 
-Built incrementally - resources are added one build-order step at a time (see
-CLAUDE.md / commit history), each step verified with `cdk synth` before the next.
-This step: base table + vector index custom resource + ingest Lambda. No search
-Lambda yet.
+Stack synthesizes to CloudFormation with:
+- TableV2 (AWS::DynamoDB::GlobalTable): base table with docId partition key, on-demand billing
+- VectorIndex custom resource: adds vector index with Bedrock embedding layer via UpdateTable
+- IngestFunction Lambda: embeds documents and writes items to table
+- SearchFunction Lambda: embeds queries and searches vector index via SearchVectors API
+
+All resources use RemovalPolicy.DESTROY for full `cdk destroy` cleanup (CLAUDE.md).
+Vector index creation happens asynchronously during stack deployment (takes ~8-10 minutes).
 """
 
 from aws_cdk import CfnOutput, RemovalPolicy, Stack
@@ -16,7 +20,12 @@ from aws_cdk.aws_dynamodb import (
     TableV2,
 )
 from constructs import Construct
-from custom_constructs import IngestFunction, VectorIndex, build_boto3_layer
+from custom_constructs import (
+    IngestFunction,
+    SearchFunction,
+    VectorIndex,
+    build_boto3_layer,
+)
 
 
 class VectorSearchStack(Stack):
@@ -87,6 +96,10 @@ class VectorSearchStack(Stack):
             self, "IngestFunction", table=self.table, boto3_layer=self.boto3_layer
         )
 
+        self.search_function = SearchFunction(
+            self, "SearchFunction", table=self.table, boto3_layer=self.boto3_layer
+        )
+
         CfnOutput(self, "TableName", value=self.table.table_name)
         CfnOutput(self, "TableArn", value=self.table.table_arn)
         CfnOutput(self, "VectorIndexName", value=self.vector_index.index_name)
@@ -95,4 +108,9 @@ class VectorSearchStack(Stack):
             self,
             "IngestFunctionName",
             value=self.ingest_function.function.function_name,
+        )
+        CfnOutput(
+            self,
+            "SearchFunctionName",
+            value=self.search_function.function.function_name,
         )

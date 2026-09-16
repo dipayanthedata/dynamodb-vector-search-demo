@@ -186,3 +186,63 @@ def test_embedding_dimension_consistent_with_config(template: Template) -> None:
     assert ingest_found, (
         "No Lambda function found with EMBEDDING_DIMENSIONS env var - ingest handler may not be deployed"
     )
+
+
+def test_ingest_lambda_function_deployed(template: Template) -> None:
+    # IngestFunction must be present in the stack - it embeds documents and writes
+    # them to the table. If the construct is defined but never instantiated, this
+    # catches it via template assertions (phantom coverage guard per CLAUDE.md).
+    rendered = template.to_json()
+    found = False
+    for resource in rendered["Resources"].values():
+        if resource["Type"] != "AWS::Lambda::Function":
+            continue
+        env_vars = (
+            resource.get("Properties", {}).get("Environment", {}).get("Variables", {})
+        )
+        if "TABLE_NAME" in env_vars:
+            found = True
+            break
+    assert found, (
+        "IngestFunction not deployed - no Lambda function found with TABLE_NAME env var"
+    )
+
+
+def test_search_lambda_function_deployed(template: Template) -> None:
+    # SearchFunction must be present in the stack - it embeds queries and searches
+    # the vector index. If the construct is defined but never instantiated, this
+    # catches it via template assertions.
+    rendered = template.to_json()
+    found = False
+    for resource in rendered["Resources"].values():
+        if resource["Type"] != "AWS::Lambda::Function":
+            continue
+        env_vars = (
+            resource.get("Properties", {}).get("Environment", {}).get("Variables", {})
+        )
+        if "VECTOR_INDEX_NAME" in env_vars:
+            found = True
+            break
+    assert found, (
+        "SearchFunction not deployed - no Lambda function found with VECTOR_INDEX_NAME env var"
+    )
+
+
+def test_boto3_layer_deployed(template: Template) -> None:
+    # Boto3 layer must be present in the stack to provide a newer version of boto3
+    # (with search_vectors support) than the Lambda managed runtime's bundled version.
+    # If the layer is deleted or never instantiated, this catches it.
+    template.resource_count_is("AWS::Lambda::LayerVersion", 1)
+
+
+def test_lambda_function_count(template: Template) -> None:
+    # The stack deploys exactly 5 Lambda functions:
+    # - IngestFunction/Function (user-deployed, embeds & writes)
+    # - SearchFunction/Function (user-deployed, embeds & searches)
+    # - VectorIndex/OnEventHandler (CDK Provider, CreateTable UpdateTable)
+    # - VectorIndex/IsCompleteHandler (CDK Provider, polls UpdateTable status)
+    # - VectorIndex/framework-onEvent (CDK Provider framework wrapper)
+    # Plus 2 more internal framework functions (onTimeout, isComplete framework wrappers).
+    # Total: 7 Lambda functions. This test catches missing user-deployed functions
+    # (ingest or search) without being overly brittle to internal Provider changes.
+    template.resource_count_is("AWS::Lambda::Function", 7)
