@@ -46,6 +46,24 @@ cd infra && cdk destroy
 
 **Total:** under $1 for a complete run, ~30 minutes end-to-end.
 
+## Performance (Step 8 Results)
+
+From a real deployment with 60-document corpus:
+
+| Metric | Value |
+|--------|-------|
+| Deploy time | 652 seconds (~11 minutes) |
+| Vector index backfill | 8m 53s |
+| Seed (60 docs) | 26.8s (0.45s per doc) |
+| Search p50 latency | 265ms (warm) |
+| Search p95 latency | 307ms (warm) |
+| Destroy cleanup | 94 seconds |
+
+Cold-start Lambda (first query on empty table): 765ms  
+Warm steady-state (average): 272ms  
+
+See `docs/results.md` for full measurements and quality verification.
+
 ## What the demo does
 
 1. **Ingest phase:** takes a corpus of short texts, generates embeddings via Bedrock Titan, stores vectors in DynamoDB
@@ -74,8 +92,10 @@ Every major choice is documented:
 - Step 2: Base DynamoDB table ✅
 - Step 3: Vector index custom resource ✅
 - Step 4: Ingest Lambda (embedding generation + storage) ✅
-- Step 5: Search Lambda (vector search + result formatting) 🔄
-- Step 6: Scripts + demo pipeline 🔄
+- Step 5: Search Lambda (vector search + result formatting) ✅
+- Step 6: Scripts + demo pipeline ✅
+- Step 7: Guardrail assertions + dimension consistency ✅
+- Step 8: Full deployment, scaling tests, and results ✅
 
 ## License
 
