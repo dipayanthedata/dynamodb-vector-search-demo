@@ -62,7 +62,7 @@ From a real deployment with 60-document corpus:
 Cold-start Lambda (first query on empty table): 765ms  
 Warm steady-state (average): 272ms  
 
-See `docs/results.md` for full measurements and quality verification.
+See `docs/results.md` for full measurements. **Note:** vector vs keyword search comparison still unmeasured (see "Next Steps" in results.md).
 
 ## What the demo does
 
@@ -95,7 +95,8 @@ Every major choice is documented:
 - Step 5: Search Lambda (vector search + result formatting) ✅
 - Step 6: Scripts + demo pipeline ✅
 - Step 7: Guardrail assertions + dimension consistency ✅
-- Step 8: Full deployment, scaling tests, and results ✅
+- Step 8: Full deployment & latency measurement ✅
+- **Step 9: Vector vs keyword search comparison** ⏳ (next — this is the article's core claim)
 
 ## License
 

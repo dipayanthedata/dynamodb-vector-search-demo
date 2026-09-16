@@ -47,26 +47,27 @@ Warm end-to-end latency breakdown (typical query):
 
 **Note:** Cold-start outlier at 694.30ms likely reflects Java garbage collection in Bedrock model loading. Warm p50 (265.10ms) reflects steady-state performance.
 
-## Search Quality
+## Search Quality (Unverified)
 
-All 6 curated queries returned relevant results with correct semantic understanding:
+Demo.py executed successfully with 6 queries, but outputs were not captured for verification.
+Keyword baseline (keyword_baseline.py) was not run, so **vector vs keyword comparison remains unmeasured** — this is the article's central claim and requires a dedicated comparison run.
 
-1. **rapid transportation** (semantic-only): ✓ Found travel docs (travel-006, travel-012)
-2. **monetary exchange** (mixed): ✓ Found business docs (business-014)
-3. **machine learning** (keyword-favorable): ✓ Found tech docs (tech-001, tech-011, tech-002)
-4. **foundational connectivity infrastructure** (semantic-only): ✓ Found tech docs (tech-004, tech-015)
-5. **healing processes** (mixed, with category filter): ✓ Found health docs (health-011, health-015, health-014)
-6. **physician expertise** (semantic-only): ✓ Found health docs (health-010, health-015, health-005)
+See "Next Steps" section below.
 
-Category filtering (Query 5b): ✓ Working correctly (filtered vs unfiltered results match)
-
-## Cleanup
+## Cleanup & Teardown Verification
 
 | Metric | Value |
 |--------|-------|
 | Destroy time | 94 seconds |
-| Resources cleaned | All (table, index, Lambdas, log groups, IAM roles) |
-| Verification | ✓ All resources removed (aws cli confirmed) |
+| Resources cleaned | All |
+
+**Verified with AWS CLI (post-destroy):**
+- ✓ DynamoDB tables (us-east-1): clean
+- ✓ DynamoDB tables (us-west-2): clean
+- ✓ CloudWatch log groups: clean
+- ✓ Lambda functions: clean
+- ✓ StepFunctions state machines: clean
+- ✓ IAM roles: clean
 
 ## Issues & Resolutions
 
@@ -91,7 +92,15 @@ Category filtering (Query 5b): ✓ Working correctly (filtered vs unfiltered res
 ## Conclusions
 
 ✓ DynamoDB native vector search is production-ready for this workload  
-✓ Semantic matching outperforms keyword search on curated queries  
 ✓ Warm latency (p50: 265.10ms) meets sub-300ms target  
-✓ Full infrastructure cleanup via CDK destroy works correctly  
-✓ Scalability path: corpus was 60 docs at ~0.45s/doc; backfill time scales linearly
+✓ Infrastructure cleanup via CDK destroy verified (see "Teardown Verification" section)
+
+## Next Steps (Before Article Publication)
+
+**Critical — vector vs keyword comparison** (unmeasured):
+- [ ] Run demo.py and keyword_baseline.py on same 6 queries with 60-document corpus
+- [ ] Capture both outputs verbatim (query, results, RCU consumed, latency)
+- [ ] Document per-query comparison: which docs returned, recall, cost
+- [ ] Identify queries where keyword search returns nothing and vector search returns correct results
+
+This comparison is the article's central claim and cannot be published without it.
