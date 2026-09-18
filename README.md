@@ -64,7 +64,7 @@ Warm steady-state (average): 272ms
 
 See `docs/results.md` for full measurements and vector vs keyword search comparison.
 
-**Comparison (6 queries):** 3 of 6 returned zero keyword matches while vector search correctly identified documents. Keyword search also produced false positives via substring matching (e.g., "healing processes" matched docs containing "metabolic processes"). Vector search had no false positives.
+**Comparison (6 queries):** 3 of 6 returned zero keyword matches while vector search identified documents. Keyword search returned 3 substring false positives (e.g., "healing processes" matched docs containing "metabolic processes"). Vector search precision was not separately evaluated.
 
 ## What the demo does
 

@@ -724,3 +724,23 @@ the vector index `IndexSizeBytes` metric reported 0 shortly after completion, wh
 SearchVectors API returned live results and correct scores. DynamoDB's size metrics
 update on a delayed cycle. Do not assume an index is empty based on IndexSizeBytes=0
 immediately after deployment — verify with a live SearchVectors call.
+
+---
+
+## Resolved: CDK Provider Framework Log Groups Orphaning
+
+**Problem (initial deployment):** Custom resources created via CDK's `Provider` framework
+(e.g. the vector index custom resource) spawn Lambda functions that auto-create CloudWatch
+log groups. These log groups were not declared as CDK resources and were not deleted by
+`cdk destroy`, leaving them orphaned. First teardown required manual deletion of 5 log
+groups (VectorIndexProviderFrameworkLogs, VectorIndexIsCompleteLogs, VectorIndexOnEventLogs,
+and two others).
+
+**Solution (confirmed 2026-09-18):** Pre-created the CDK Provider framework log groups as
+explicit `aws_logs.LogGroup` CDK resources with `removal_policy=cdk.RemovalPolicy.DESTROY`.
+On the 2026-09-18 teardown (118.80 seconds), all log groups deleted automatically with the
+stack. No manual cleanup required. This resolved the orphaning issue completely.
+
+**Implementation:** See `infra/stacks/vector_search_stack.py` lines with explicit LogGroup
+constructs for Provider framework functions (IngestFunctionLogs, SearchFunctionLogs,
+VectorIndexProviderFrameworkLogs, VectorIndexIsCompleteLogs, VectorIndexOnEventLogs).
