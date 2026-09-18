@@ -17,7 +17,9 @@ import boto3
 _LAMBDA_SEARCH = os.environ.get(
     "SEARCH_FUNCTION_NAME", "DynamoDBVectorSearchDemo-SearchHandler"
 )
-_REGION = os.environ.get("AWS_REGION") or os.environ.get("AWS_DEFAULT_REGION", "us-east-1")
+_REGION = os.environ.get("AWS_REGION") or os.environ.get(
+    "AWS_DEFAULT_REGION", "us-east-1"
+)
 _lambda_client = boto3.client("lambda", region_name=_REGION)
 
 

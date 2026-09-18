@@ -1,6 +1,6 @@
 # DynamoDB Native Vector Search + Bedrock Titan Embeddings Demo
 
-A hands-on demo accompanying a technical article about DynamoDB's native vector search (GA'd 2026-08-05). Shows semantic similarity search side-by-side with a keyword baseline, all running on a shoestring budget in under 30 minutes.
+A hands-on demo accompanying the article [DynamoDB as a Vector Store: What It Takes to Actually Ship It](https://builder.aws.com/content/3JUG2j9t6VaqHu1I0aYN4e9tavY/dynamodb-as-a-vector-store-what-it-takes-to-actually-ship-it) about DynamoDB's native vector search (GA'd 2026-08-05). Shows semantic similarity search side-by-side with a keyword baseline, all running on a shoestring budget in under 30 minutes.
 
 **Stack:** AWS CDK v2 (Python 3.12), Lambda, DynamoDB vector search, Bedrock Titan Text Embeddings V2.
 
@@ -39,7 +39,7 @@ cd infra && cdk destroy
 
 ### What gets deployed
 
-- A DynamoDB table with a vector index (5 GB on-demand storage default)
+- A DynamoDB table with a vector index (on-demand billing)
 - Two Lambda functions (ingest + search)
 - CloudWatch log groups (auto-deleted by `cdk destroy`)
 - Bedrock API calls for embeddings (pay-per-token)
@@ -62,7 +62,9 @@ From a real deployment with 60-document corpus:
 Cold-start Lambda (first query on empty table): 765ms  
 Warm steady-state (average): 272ms  
 
-See `docs/results.md` for full measurements. **Note:** vector vs keyword search comparison still unmeasured (see "Next Steps" in results.md).
+See `docs/results.md` for full measurements and vector vs keyword search comparison.
+
+**Comparison (6 queries):** 3 of 6 returned zero keyword matches while vector search correctly identified documents. Keyword search also produced false positives via substring matching (e.g., "healing processes" matched docs containing "metabolic processes"). Vector search had no false positives.
 
 ## What the demo does
 
@@ -96,7 +98,11 @@ Every major choice is documented:
 - Step 6: Scripts + demo pipeline ✅
 - Step 7: Guardrail assertions + dimension consistency ✅
 - Step 8: Full deployment & latency measurement ✅
-- **Step 9: Vector vs keyword search comparison** ⏳ (next — this is the article's core claim)
+- Step 9: Vector vs keyword search comparison ✅
+  - 60-document corpus tested
+  - 6 queries compared: 3 zero-keyword-match, 3 mixed/favorable
+  - Vector search: 0 false positives; keyword search: 3 false positives (substring matches)
+  - Raw latencies and per-query results in docs/results.md
 
 ## License
 

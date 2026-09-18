@@ -26,7 +26,9 @@ _LAMBDA_FUNCTION_NAME = os.environ.get(
     "INGEST_FUNCTION_NAME", "DynamoDBVectorSearchDemo-IngestHandler"
 )
 
-_REGION = os.environ.get("AWS_REGION") or os.environ.get("AWS_DEFAULT_REGION", "us-east-1")
+_REGION = os.environ.get("AWS_REGION") or os.environ.get(
+    "AWS_DEFAULT_REGION", "us-east-1"
+)
 _lambda_client = boto3.client("lambda", region_name=_REGION)
 _dynamodb_client = boto3.client("dynamodb", region_name=_REGION)
 
