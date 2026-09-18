@@ -22,6 +22,18 @@ Constraints that shape every design decision here:
   training data. If you find it's wrong or stale, fix it and say so — don't just
   route around it silently.
 
+## AWS Credentials
+
+This project uses the `personal` AWS profile with static access keys in `~/.aws/credentials`.
+No SSO login required. To work with AWS resources:
+
+```bash
+export AWS_PROFILE=personal
+aws sts get-caller-identity  # Verify credentials
+```
+
+There is no `aws login` command; set `AWS_PROFILE=personal` directly.
+
 ## Non-negotiable rules
 
 **Full teardown.** Everything this repo creates must be removed by `cdk destroy`,

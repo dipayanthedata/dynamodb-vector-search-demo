@@ -285,7 +285,7 @@ Keyword baseline: 0 RCU reported across all Scan operations (on-demand billing, 
 
 | Metric | Value |
 |--------|-------|
-| Destroy time | 94 seconds |
+| Destroy time | 118.80 seconds |
 | Resources cleaned | All |
 
 **Verified with AWS CLI (post-destroy):**
